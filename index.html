@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Georgia Zone Address Checker</title>
+  <meta charset="utf-8">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      color: #9E9E9E;
+    }
+    gmp-map {
+      height: 100%;
+      width: 100%;
+    }
+    #result {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      z-index: 999;
+      font-weight: bold;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js"></script>
+  <gmpx-api-loader
+    key="YOUR_GOOGLE_MAPS_API_KEY"
+    libraries="geometry">
+  </gmpx-api-loader>
+  <script>
+    async function init() {
+      await customElements.whenDefined('gmp-map');
+      const mapEl = document.querySelector("gmp-map");
+      const marker = document.getElementById("marker");
+      const resultBox = document.getElementById("result");
+      const placePicker = document.getElementById("place-picker");
+
+      mapEl.addEventListener('loadmap', () => {
+        const map = mapEl.innerMap;
+
+        const zoneCoords = [
+          { lat: 33.32031, lng: -84.09662 },
+          { lat: 33.42262, lng: -83.94137 },
+          { lat: 33.64511, lng: -83.78890 },
+          { lat: 33.83079, lng: -83.77802 },
+          { lat: 34.07922, lng: -83.77805 },
+          { lat: 34.21432, lng: -83.88973 },
+          { lat: 34.27277, lng: -84.05308 },
+          { lat: 34.28406, lng: -84.32530 },
+          { lat: 34.26612, lng: -84.54312 },
+          { lat: 34.08148, lng: -84.73651 },
+          { lat: 33.90535, lng: -84.81265 },
+          { lat: 33.65644, lng: -84.82085 },
+          { lat: 33.48175, lng: -84.73104 },
+          { lat: 33.30667, lng: -84.54048 },
+          { lat: 33.24524, lng: -84.28995 },
+          { lat: 33.32031, lng: -84.09662 }
+        ];
+
+        const polygon = new google.maps.Polygon({
+          paths: zoneCoords,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#FF0000",
+          fillOpacity: 0.2
+        });
+        polygon.setMap(map);
+
+        placePicker.addEventListener('gmpx-placechange', () => {
+          const place = placePicker.value;
+          if (!place || !place.location) {
+            resultBox.textContent = "❌ No valid location selected.";
+            marker.position = null;
+            return;
+          }
+
+          const latLng = new google.maps.LatLng(place.location.lat, place.location.lng);
+          map.setCenter(latLng);
+          map.setZoom(12);
+          marker.position = place.location;
+
+          const isInside = google.maps.geometry.poly.containsLocation(latLng, polygon);
+          resultBox.textContent = isInside
+            ? "✅ This address IS within the zone."
+            : "❌ This address is NOT within the zone.";
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</head>
+<body>
+  <div id="result">Waiting for address input...</div>
+  <gmp-map id="map" center="33.95,-84.3" zoom="9" map-id="DEMO_MAP_ID">
+    <gmpx-place-picker id="place-picker" for-map="map" slot="control-block-start-inline-start"></gmpx-place-picker>
+    <gmp-advanced-marker id="marker"></gmp-advanced-marker>
+  </gmp-map>
+</body>
+</html>
